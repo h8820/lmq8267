@@ -340,7 +340,7 @@ stop_et() {
 	iptables -D FORWARD -i ${tunname} -o ${tunname} -j ACCEPT 2>/dev/null
 	iptables -D FORWARD -i ${tunname} -j ACCEPT 2>/dev/null
 	iptables -t nat -D POSTROUTING -o ${tunname} -j MASQUERADE 2>/dev/null
-	[ ! -z "`pidof easytier-core`" ] && [ ! -z "`pidof easytier-web`" ] && logg "进程已关闭!"
+	[ -z "`pidof easytier-core`" ] && [ -z "`pidof easytier-web`" ] && logg "进程已关闭!"
 	if [ ! -z "$scriptname" ] ; then
 		eval $(ps -w | grep "$scriptname" | grep -v $$ | grep -v grep | awk '{print "kill "$1";";}')
 		eval $(ps -w | grep "$scriptname" | grep -v $$ | grep -v grep | awk '{print "kill -9 "$1";";}')
