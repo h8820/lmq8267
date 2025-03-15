@@ -259,6 +259,20 @@ start_web() {
 		et_core=/tmp/var/easytier-web
   		nvram set easytier_web_bin=$et_web_bin
     	fi
+     	mkdir -p /tmp/file
+  	if [ -f "$et_web_html" ] ; then
+  		cp -rf "$et_web_html" /tmp/file/et.html
+  		lan_ip=`nvram get lan_ipaddr`
+  		nvram set easytier_api="http://${lan_ip}/file/et.html"
+    		logg "Web控制台：http://${lan_ip}/file/et.html"
+      	else
+       		curl -Lko /tmp/file/et.html https://easytier.cn/web || curl -Lko /tmp/file/et.html https://easytier.cn/web/index.html
+	 	if [ "$?" = 0 ] ; then
+	 		lan_ip=`nvram get lan_ipaddr`
+  			nvram set easytier_api="http://${lan_ip}/file/et.html"
+    			logg "Web控制台：http://${lan_ip}/file/et.html"
+       		fi
+  	fi
     	if [ -f "$et_web_bin" ] ; then
 		[ ! -x "$et_web_bin" ] && chmod +x $et_web_bin
   		[[ "$($et_web_bin -h 2>&1 | wc -l)" -lt 2 ]] && logg "程序${et_web_bin}不完整！" && rm -rf $et_web_bin
@@ -268,20 +282,6 @@ start_web() {
   		return 1
   	fi
 	sed -Ei '/【EasyTier_web】|^$/d' /tmp/script/_opt_script_check
-  	mkdir -p /tmp/file
-  	if [ -f "$et_web_html" ] ; then
-  		cp -rf "$et_web_html" /tmp/file/et.html
-  		lan_ip=`nvram get lan_ipaddr`
-  		nvram set easytier_api="http://${lan_ip}/file/et.html"
-    		logg "Web控制台：http://${lan_ip}/file/et.html"
-      	else
-       		curl -Lko /tmp/file/et.html https://easytier.cn/web
-	 	if [ "$?" = 0 ] ; then
-	 		lan_ip=`nvram get lan_ipaddr`
-  			nvram set easytier_api="http://${lan_ip}/file/et.html"
-    			logg "Web控制台：http://${lan_ip}/file/et.html"
-       		fi
-  	fi
 	webCMD=""
 	if [ ! -z "$et_web_db" ] ; then 
  		wdb_path=$(dirname "$et_web_db")
