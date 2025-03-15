@@ -208,11 +208,11 @@ start_core() {
 			logg "Web服务器地址或用户名不能为空！程序退出！"
 			exit 1
 		fi
-		[ "$et_web_log" = "1" ] && CMD="--console-log-level warn"
-		[ "$et_web_log" = "2" ] && CMD="--console-log-level info"
-		[ "$et_web_log" = "3" ] && CMD="--console-log-level debug"
-		[ "$et_web_log" = "4" ] && CMD="--console-log-level trace"
-		[ "$et_web_log" = "5" ] && CMD="--console-log-level error"
+		[ "$et_log" = "1" ] && CMD="--console-log-level warn"
+		[ "$et_log" = "2" ] && CMD="--console-log-level info"
+		[ "$et_log" = "3" ] && CMD="--console-log-level debug"
+		[ "$et_log" = "4" ] && CMD="--console-log-level trace"
+		[ "$et_log" = "5" ] && CMD="--console-log-level error"
 		CMD="-w $config_server $CMD"
 	else
 		[ "$et_log" = "1" ] && CMD="--console-log-level warn"
