@@ -142,7 +142,15 @@ core_keep() {
 	[ -z "\`pidof easytier-core\`" ] && logger -t "进程守护" "EasyTier_core 进程掉线" && eval "$scriptfilepath start &" && sed -Ei '/【EasyTier_core】|^$/d' /tmp/script/_opt_script_check #【EasyTier_core】
 	[ -z "\$(iptables -L -n -v | grep '$tunname')" ] && logger -t "进程守护" "EasyTier_core 防火墙规则失效" && eval "$scriptfilepath start &" && sed -Ei '/【EasyTier_core】|^$/d' /tmp/script/_opt_script_check #【EasyTier_core】
 	OSC
-
+	if [ ! -z "$et_ports" ] ; then
+		et_portss=$(echo $et_ports | tr -d '\r')
+		for et_port in $et_portss ; do
+			[ -z "$et_port" ] && continue
+			cat >> "/tmp/script/_opt_script_check" <<-OSC
+	[ -z "\$(iptables -L -n -v | grep '$et_port')" ] && logger -t "进程守护" "EasyTier_core 防火墙规则失效" && eval "$scriptfilepath start &" && sed -Ei '/【EasyTier_core】|^$/d' /tmp/script/_opt_script_check #【EasyTier_core】
+	OSC
+		done	
+	fi
 	fi
 
 }
