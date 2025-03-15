@@ -14,7 +14,8 @@ et_web_api="$(nvram get easytier_web_api)"
 et_web_log="$(nvram get easytier_web_log)"
 et_web_html="$(nvram get easytier_web_html)"
 et_web_bin="$(nvram get easytier_web_bin)"
-
+[ -z "$et_web_port" ] && et_web_port=22020
+[ -z "$et_web_api" ] && et_web_port=11211
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 github_proxys="$(nvram get github_proxy)"
 [ -z "$github_proxys" ] && github_proxys=" "
@@ -161,6 +162,8 @@ web_keep() {
 	sed -Ei '/【EasyTier_web】|^$/d' /tmp/script/_opt_script_check
 	cat >> "/tmp/script/_opt_script_check" <<-OSC
 	[ -z "\`pidof easytier-web\`" ] && logger -t "进程守护" "EasyTier_web 进程掉线" && eval "$scriptfilepath start &" && sed -Ei '/【EasyTier_web】|^$/d' /tmp/script/_opt_script_check #【EasyTier_web】
+ 	[ -z "\$(iptables -L -n -v | grep '$et_web_port')" ] && logger -t "进程守护" "EasyTier_web 防火墙规则失效" && eval "$scriptfilepath start &" && sed -Ei '/【EasyTier_web】|^$/d' /tmp/script/_opt_script_check #【EasyTier_web】
+  	[ -z "\$(iptables -L -n -v | grep '$et_web_api')" ] && logger -t "进程守护" "EasyTier_web 防火墙规则失效" && eval "$scriptfilepath start &" && sed -Ei '/【EasyTier_web】|^$/d' /tmp/script/_opt_script_check #【EasyTier_web】
 	OSC
 
 	fi
@@ -182,10 +185,10 @@ et_rules() {
 		et_portss=$(echo $et_ports | tr -d '\r')
 		for et_port in $et_portss ; do
 			[ -z "$et_port" ] && continue
-			iptables -I INPUT -p tcp --dport "$et_port" -j ACCEPT >/dev/null 2>&1
-		 	ip6tables -I INPUT -p tcp --dport "$et_port" -j ACCEPT >/dev/null 2>&1
-		 	iptables -I INPUT -p udp --dport "$et_port" -j ACCEPT >/dev/null 2>&1
-		 	ip6tables -I INPUT -p udp --dport "$et_port" -j ACCEPT >/dev/null 2>&1
+			iptables -I INPUT -p tcp --dport "$et_port" -j ACCEPT 
+		 	ip6tables -I INPUT -p tcp --dport "$et_port" -j ACCEPT 
+		 	iptables -I INPUT -p udp --dport "$et_port" -j ACCEPT
+		 	ip6tables -I INPUT -p udp --dport "$et_port" -j ACCEPT 
 		done	
 	fi
 	core_keep
@@ -308,6 +311,14 @@ start_web() {
   		logg "内存占用 ${wmem} CPU占用 ${etwcpu}%"
   		et_restart o
   		web_keep
+    		iptables -I INPUT -p tcp --dport "$et_web_port" -j ACCEPT 
+		ip6tables -I INPUT -p tcp --dport "$et_web_port" -j ACCEPT
+		iptables -I INPUT -p udp --dport "$et_web_port" -j ACCEPT 
+		ip6tables -I INPUT -p udp --dport "$et_web_port" -j ACCEPT
+  		iptables -I INPUT -p tcp --dport "$et_web_api" -j ACCEPT
+		ip6tables -I INPUT -p tcp --dport "$et_web_api" -j ACCEPT
+		iptables -I INPUT -p udp --dport "$et_web_api" -j ACCEPT
+		ip6tables -I INPUT -p udp --dport "$et_web_api" -j ACCEPT
 	else
 		logg "运行失败, 注意检查${et_web_bin}是否下载完整,10 秒后自动尝试重新启动"
   		sleep 10
@@ -348,6 +359,14 @@ stop_et() {
 	iptables -D FORWARD -i ${tunname} -o ${tunname} -j ACCEPT 2>/dev/null
 	iptables -D FORWARD -i ${tunname} -j ACCEPT 2>/dev/null
 	iptables -t nat -D POSTROUTING -o ${tunname} -j MASQUERADE 2>/dev/null
+ 	iptables -D INPUT -p tcp --dport "$et_web_port" -j ACCEPT >/dev/null 2>&1
+	ip6tables -D INPUT -p tcp --dport "$et_web_port" -j ACCEPT >/dev/null 2>&1
+	iptables -D INPUT -p udp --dport "$et_web_port" -j ACCEPT >/dev/null 2>&1
+	ip6tables -D INPUT -p udp --dport "$et_web_port" -j ACCEPT >/dev/null 2>&1
+  	iptables -D INPUT -p tcp --dport "$et_web_api" -j ACCEPT >/dev/null 2>&1
+	ip6tables -D INPUT -p tcp --dport "$et_web_api" -j ACCEPT >/dev/null 2>&1
+	iptables -D INPUT -p udp --dport "$et_web_api" -j ACCEPT >/dev/null 2>&1
+	ip6tables -D INPUT -p udp --dport "$et_web_api" -j ACCEPT >/dev/null 2>&1
 	[ -z "`pidof easytier-core`" ] && [ -z "`pidof easytier-web`" ] && logg "进程已关闭!"
 	if [ ! -z "$scriptname" ] ; then
 		eval $(ps -w | grep "$scriptname" | grep -v $$ | grep -v grep | awk '{print "kill "$1";";}')
